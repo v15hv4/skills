@@ -93,18 +93,16 @@ from opentelemetry import trace
 
 def add_otel_context(_logger: Any, _method_name: str, event_dict: MutableMapping[str, Any]) -> MutableMapping[str, Any]:
     span = trace.get_current_span()
-    if not span.is_recording():
-        event_dict["span"] = None
-        return event_dict
-
-    ctx = span.get_span_context()
-    parent = getattr(span, "parent", None)
-
-    event_dict["span_id"] = format(ctx.span_id, "016x")
-    event_dict["trace_id"] = format(ctx.trace_id, "032x")
-    if parent:
-        event_dict["parent_span_id"] = format(parent.span_id, "016x")
-
+ 
+    if span.is_recording():
+        ctx = span.get_span_context()
+        parent = getattr(span, "parent", None)
+ 
+        event_dict["span_id"] = format(ctx.span_id, "016x")
+        event_dict["trace_id"] = format(ctx.trace_id, "032x")
+        if parent:  Not Committed Yet                                                                                                                                                                       
+            event_dict["parent_span_id"] = format(parent.span_id, "016x")
+ 
     return event_dict
 ```
 
