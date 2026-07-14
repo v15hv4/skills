@@ -87,9 +87,11 @@ Then, for each matched instrumentation package, call its `Instrumentor` at the r
 If `structlog` is not a dependency, skip this step. If it is, find its `structlog.configure(...)` call and add a processor that stamps the current span's context onto every log event:
 
 ```python
+from typing import Any, MutableMapping
+
 from opentelemetry import trace
 
-def add_otel_context(_, __, event_dict):
+def add_otel_context(_logger: Any, _method_name: str, event_dict: MutableMapping[str, Any]) -> MutableMapping[str, Any]:
     span = trace.get_current_span()
     if not span.is_recording():
         event_dict["span"] = None
@@ -98,11 +100,10 @@ def add_otel_context(_, __, event_dict):
     ctx = span.get_span_context()
     parent = getattr(span, "parent", None)
 
-    event_dict["span"] = {
-        "span_id": format(ctx.span_id, "016x"),
-        "trace_id": format(ctx.trace_id, "032x"),
-        "parent_span_id": None if not parent else format(parent.span_id, "016x"),
-    }
+    event_dict["span_id"] = format(ctx.span_id, "016x")
+    event_dict["trace_id"] = format(ctx.trace_id, "032x")
+    if parent:
+        event_dict["parent_span_id"] = format(parent.span_id, "016x")
 
     return event_dict
 ```

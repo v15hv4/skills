@@ -179,15 +179,15 @@ def registry_candidates() -> list[dict]:
 
 
 def match_registry(dep_names: list[str], candidates: list[dict]) -> list[dict]:
+    cand_slugs = [(cand, normalize(cand["slug"])) for cand in candidates]
+    cand_slugs = [(cand, slug) for cand, slug in cand_slugs if slug]
+
     matches = []
     for dep in dep_names:
         dep_norm = normalize(dep)
         if not dep_norm:
             continue
-        for cand in candidates:
-            slug_norm = normalize(cand["slug"])
-            if not slug_norm:
-                continue
+        for cand, slug_norm in cand_slugs:
             if dep_norm == slug_norm or slug_norm in dep_norm or dep_norm in slug_norm:
                 matches.append(
                     {
@@ -217,7 +217,6 @@ def main() -> None:
     candidates = registry_candidates()
     registry_matches = match_registry(dep_names, candidates)
 
-    covered_deps = {m["dependency"] for m in bootstrap_matches} | {m["dependency"] for m in registry_matches}
     # dedupe registry matches already covered by bootstrap_gen with the same package
     bootstrap_pkgs = {normalize(m["instrumentation_package"]) for m in bootstrap_matches}
     registry_matches = [
@@ -231,7 +230,11 @@ def main() -> None:
         "bootstrap_gen_matches": bootstrap_matches,
         "bootstrap_live_requirements": bootstrap_live,
         "registry_matches": registry_matches,
-        "unmatched_dependencies": sorted(set(dep_names) - covered_deps),
+        "unmatched_dependencies": sorted(
+            set(dep_names)
+            - {m["dependency"] for m in bootstrap_matches}
+            - {m["dependency"] for m in registry_matches}
+        ),
     }
     print(json.dumps(report, indent=2))
 
