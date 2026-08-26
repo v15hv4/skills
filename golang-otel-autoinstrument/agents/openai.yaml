@@ -1,0 +1,4 @@
+interface:
+  display_name: "Go OTel Auto-Instrument"
+  short_description: "Instrument Go apps with OpenTelemetry"
+  default_prompt: "Use $golang-otel-autoinstrument to add OpenTelemetry instrumentation to this Go application."
